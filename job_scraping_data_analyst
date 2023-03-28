@@ -1,0 +1,307 @@
+###  job_scraping_data_analyst.py  ###
+
+#####
+# compile job post data from LinkedIn for later analysis and visualization
+#
+# script begins by taking certain variable inputs for the job search which can be 
+# easily edited; script then uses selenium to open LinkedIn page and scrapes most 
+# of the required data; the script then uses beautiful soup to pull job descriptions 
+# from individual job post urls and identifies keywords; script then pulls datset
+# with same columns from local database and compares two datasets and isolates new
+# data appending back to the same table; script ends with writing a basic success 
+# note to the desktop
+#####
+
+
+
+### BEGIN SCRIPT ###
+from selenium import webdriver
+import time
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+import numpy as np
+import sqlalchemy as sql
+from sqlalchemy import text
+from datetime import datetime
+
+
+
+##### BEGIN USER ADJUSTED VARIABLES #####
+
+# USER ADJUSTED AS NEEDED
+# search terms for main jobs posting search; job title and location 
+job_title_keyword_1 = 'data'
+job_title_keyword_2 = 'analyst'
+job_location = 'Remote'
+
+# USER ADJUSTED AS NEEDED
+# number of pagedowns for scrolling down on main job search results page; 
+# higher number should equate to increaed number of job posts data pulled
+number_of_pagedowns = 100
+
+# USER ADJUSTED AS NEEDED
+# keywords list for identifying mentions in job description; broken into categories
+skills_keys = ['SQL', 'Access', 'Excel', 'Python', 'Visualization', 'Tableau', 
+                'Power BI', 'Looker', 'Jupyter', 'Apache Spark', 'SAS', 'KNIME', 
+                'Domo', 'Klipfolio', 'Zoho', 'Qlik', 'SAP', 'Sisense', 'Spotfire', 
+                'Data Studio', 'BigQuery', 'Redash', 'Periscope', 'Metabase', 
+                'Chartio', 'Mode', 'RapidMiner', 'Oracle']
+
+packages_keys = ['pandas', 'Requests', 'Scrapy', 'Beautiful Soup', 'NumPy', 'SciPy', 
+                 'Keras', 'SciKit-Learn', 'PyTorch', 'TensorFlow', 'XGBoost', 
+                 'Matplotlib', 'Seaborn', 'Bokeh', 'Plotly', 'pydot', 'Selenium', 
+                 'urllib3', 'NLTK', 'Pillow', 'pytest', 'csv', 'json', 'openpyxl']
+
+degree_keys = ['bachelor', 'master', 'phd'] 
+
+# a list of keywords that require more precision to identify
+skills_precision = ['R']
+
+packages_precision = ['Dash', 'dash']
+
+##### END USER ADJUSTED VARIABLES #####
+
+
+##### use selenium to open job search page and pull as much data as possible
+
+# setup jobs search url with easy options for changing keywords
+base_url = 'https://www.linkedin.com/jobs/search/?&keywords='
+kwrd1 = job_title_keyword_1
+kwrd2 = job_title_keyword_2
+loc = job_location
+url_details = kwrd1 + '%20' + kwrd2 + '&location=' + loc + '&refresh=true'
+url = base_url + url_details
+
+# open browser with selenium, navigate to jobs search url, scroll down to load more 
+# results, then pull required data points that are available on main search page
+
+# open browser using selenium and wait for browser to load
+driver = webdriver.Chrome()
+driver.get(url)
+time.sleep(1)
+
+# scroll down results page several times to load additional results beyond minimum
+elem = driver.find_element(By.TAG_NAME, "body")
+no_of_pagedowns = number_of_pagedowns
+while no_of_pagedowns:
+    elem.send_keys(Keys.PAGE_DOWN)
+    time.sleep(0.2)
+    no_of_pagedowns -= 1
+
+# base sting of xpath for each data point requried, same all; will iterate over list 
+# of numbers that changes in xpath for each job post and add on final piece of xpath
+xpth = '//*[@id="main-content"]/section[2]/ul/li['
+
+# final piece of xpath string for each individual data point required
+lnk = ']/div/a'
+ttl = ']/div/div[2]/h3'
+cmpy = ']/div/div[2]/h4/a'
+lctn = ']/div/div[2]/div/span[1]' 
+slry = ']/div/div[2]/div/span[2]'
+dt = ']/div/div[2]/div/time'
+
+# list of numbers that represents each individual job post in xpath string; create
+# dynamically by pulling number of job post items that are open on page using selenium
+xpth_rng_fndr = '//*[@id="main-content"]/section[2]/ul/li'
+rng_end = len(driver.find_elements(By.XPATH, xpth_rng_fndr)) + 1
+xpth_l = list(range(1,rng_end))
+
+# setup dictionary for appending data values to and later passing to dataframe
+data = {'date': [], 'title': [], 'company': [], 'location': [], 
+        'salary': [], 'link': []}
+
+# iterate over list of numbers for passing to xpath that speicifies each job post 
+for i in xpth_l:
+    
+    # setup xpath variables for easy passing to selenium
+    lnk_xpth = xpth + str(i) + lnk
+    ttl_xpth = xpth + str(i) + ttl
+    cmpy_xpth = xpth + str(i) + cmpy
+    lctn_xpth = xpth + str(i) + lctn
+    slry_xpth = xpth + str(i) + slry
+    dt_xpth = xpth + str(i) + dt
+    
+    # use selenium to pull each required data point using appropriate xpath; use
+    # try except strcuture to avoid errors for data points not included in post
+    try:
+        link = driver.find_element(By.XPATH, lnk_xpth).get_attribute('href')
+    # if data point not found pass blank so no error when appending to dictionary
+    except:
+        link = ''
+    try:
+        title = driver.find_element(By.XPATH, ttl_xpth).text
+    except:
+        title = ''
+    try:
+        company = driver.find_element(By.XPATH, cmpy_xpth).text
+    except:
+        company = ''
+    try:
+        location = driver.find_element(By.XPATH, lctn_xpth).text
+    except:
+        location = ''
+    try:
+        salary = driver.find_element(By.XPATH, slry_xpth).text
+    except:
+        salary = ''
+    try:
+        date = driver.find_element(By.XPATH, dt_xpth).get_attribute('datetime')
+    except:
+        date = ''
+    
+    # append all identified data point objects to dictionary setup above
+    data['link'].append(link)
+    data['title'].append(title)
+    data['company'].append(company)
+    data['location'].append(location)
+    data['salary'].append(salary)
+    data['date'].append(date)
+
+# close browser, no longer needed as the results page has been fully scraped
+driver.close()
+
+# pass dictionary of identified data to dataframe
+jobs_df = pd.DataFrame.from_dict(data)
+
+# drop duplicates by list date, job title, company and location; cannot simply
+# drop using tracking ID as many copmanies post the same job into multiple posts
+cols = ['date', 'title','company', 'location']
+jobs_df = jobs_df.drop_duplicates(subset=cols)
+
+##### pull job description and identify key words and add to dataframe
+
+# create blank columns in dataframe for passing keyword mentions to in for loop
+jobs_df['skills'] = ''
+jobs_df['packages'] = ''
+jobs_df['degrees'] = ''
+
+# loop through jobs dataframe and pass individual job post link to beautiful soup 
+# object and pull out job description and search for / pull out specific key words
+for index, row in jobs_df.iterrows():    
+
+    # try except structure in case there's issue with the job description format
+    try:
+        # load job post page data into beautiful soup object
+        lnk = row['link']
+        r = requests.get(lnk)
+        soup = BeautifulSoup(r.text, 'html.parser')
+    
+        # identify job description using beautiful soup 
+        cls_id = "show-more-less-html__markup"
+        dscrptn = soup.find_all('div', class_=cls_id)[0].get_text().strip()
+    
+        # identify keyword mentions in job description and store as one string
+        skill = [ele for ele in skills_keys if(ele.casefold() in dscrptn.casefold())]
+        package = [ele for ele in packages_keys if(ele.casefold() in dscrptn.casefold())]
+        degree = [ele for ele in degree_keys if(ele.casefold() in dscrptn.casefold())]
+        
+        # use different method for identifying keywords that require more precision
+        skill_precision = list(set(dscrptn.split()) & set(skills_precision))
+        package_precision = list(set(dscrptn.split()) & set(packages_precision))
+        
+        # combine both keyword identification lists, formatted as string
+        skill = skill + skill_precision
+        package = package + package_precision
+    
+    # if issue with job post link pass blank so no error when assigning to row 
+    except:
+        skill = ''
+        package = ''
+        degree = ''
+    
+    # pass identified job description keywords and pass to row of dataframe 
+    row['skills'] = str(skill)
+    row['packages'] = str(package)
+    row['degrees'] = str(degree)
+        
+# reorder columns of dataframe for easier reading in databse table format
+cols = ['date', 'title', 'company', 'location', 'salary', 'skills',
+        'packages', 'degrees', 'link']
+jobs_df = jobs_df.reindex(columns=cols)
+
+# drop any empty rows of dataframe to account for the try except format
+jobs_df['date'].replace('', np.nan, inplace=True)
+jobs_df.dropna(subset=['date'], inplace=True)
+
+##### pull existing dataset from database and compare, push new data to database
+
+# pass configuation for database from text file to objects
+path = r'C:\Users\LENOVO\.spyder-py3'
+file_name = r'\database_configuration.txt'
+file = path + file_name
+with open(file, 'r') as f:
+    config = list(f)
+    f.close
+for i, v in enumerate(config):
+    config[i] = v.rstrip('\n')
+username = config[0]
+hostname = config[1]
+database = config[2]
+password = config[3]
+port_id = config[4]
+
+# sql alchemy engine string 
+eng_1 = 'postgresql+psycopg2://' + username + ':' + password + '@' + hostname
+eng_2 = ':' + str(port_id) + '/' + database
+eng = eng_1 + eng_2
+
+# sql alchemy engine and connection
+engine = sql.create_engine(eng)
+conn = engine.connect()
+
+# table name based on job search inserted at top of script
+if job_location == 'Remote':
+    tbl = kwrd1 + '_' + kwrd2 + '_wfh'
+else:
+    tbl = kwrd1 + '_' + kwrd2 + '_io'
+
+# sql query to pull data from database to compare against recent data scrape
+qry = text('SELECT * FROM ' + tbl)
+
+# execute sql query and fetch all data
+db_df = pd.read_sql_query(qry, conn)
+
+# convert date column of database dataframe to string, equivalent to jobs dataframe
+db_df['date'] = db_df['date'].astype('string')
+
+# required variabls for comparing dataframes to each other
+cols = ['date', 'title', 'company', 'location']
+
+# compare jobs dataframe to database dataframe to get new rows not in database
+jobs_df = (jobs_df.merge(
+    db_df[cols], on=cols, how='outer', indicator=True).loc[
+        lambda x:x.pop('_merge').eq('left_only')])
+
+# push data frame to sql table 
+jobs_df.to_sql(name=tbl, con=engine, if_exists='append', index=False)
+
+##### write basic script success report text file
+
+# will run this script nightly as chronjob; get some basic meta data and save to 
+# text file on desktop for quick/easy daily confirmation that script ran successfuly
+
+# today's date and create string for text file
+date = datetime.today().strftime('%Y-%m-%d')
+date = 'Script run date: ' + str(date) + ' \n'
+
+# count the number new rows added to database and create string for text file
+new_rows = len(jobs_df.index)
+new_rows = 'Number of rows added to database: ' + str(new_rows) + ' \n'
+
+# save dynamic file name for different job titles
+path = r'C:\Users\LENOVO\Desktop\Script Reports'
+file_name = r'\JOBS_SCRIPT_REPORT_' + tbl + '.txt'
+file = path + file_name
+
+# write script report to text file
+with open(file, 'w') as f:
+    f.write('Script Report \n')
+    f.write('\n')
+    f.write(date)
+    f.write(new_rows)
+    
+### END SCRIPT ###
+
