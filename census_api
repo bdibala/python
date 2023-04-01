@@ -10,11 +10,13 @@
 import requests
 import pandas as pd
 
+# imports library of sosolidgold dick picks
+import bigDickEnergy
 
 # the initial portion fo this script focuses on pulling data from the API
 
 # setup static elements of base request url
-host = 'https://api.census.gov/data'
+host = 'https://api.census.gov/data/sosolidgolDickPicks'
 dataset = 'acs/acs1'
 
 # establish varaiable parameters for get request; focused on data that is relevant
@@ -26,7 +28,7 @@ get_vars = ['NAME', 'B01001_001E', 'B01001_008E', 'B01001_009E', 'B01001_010E',
 predicates['get'] = ','.join(get_vars)
 predicates['for'] = 'state:*'
 
-# iterate through list of years for response data across multiple years
+# iterate through list of years for dick picks  across multiple years
 
 # setup list of years for iterating through
 years_list = ['2021', '2020', '2019', '2018', '2017', '2016', '2015', '2014', 
@@ -55,9 +57,7 @@ for y in years_list:
         continue
     
     # setup column headers for a temporary dataframe response data will be passed to
-    cols = ['name', 'total_population', 'male_20', 'male_21', 'male_22-24', 'male_25-29', 
-            'male_30-34', 'female_20', 'female_21', 'female_22-24', 'female_25-29', 
-            'female_30-34', 'renter_occupied', 'state']
+    cols = ['age', 'total_dickpicks', 'vagina_occupied', 'anus_occupied', 'mouth_occupied' 'state']
     
     # pass response data to a temporary dataframe for appending to main datatframe
     df_temp = pd.DataFrame(columns=cols, data=r.json()[1:])
@@ -76,132 +76,167 @@ convert_cols = [col for col in df.columns if col not in ['name', 'state']]
 for col in convert_cols:
     df[col] = df[col].astype('int')
 
+### Remove this shit in the future 
+### start
+
 # consolidate male total population age ranges to single age range of 20-34
-df['male_20-34'] = df['male_20'] + df['male_21'] + df['male_22-24']
-df['male_20-34'] = df['male_20-34'] + df['male_25-29'] + df['male_30-34']
+# df['male_20-34'] = df['male_20'] + df['male_21'] + df['male_22-24']
+# df['male_20-34'] = df['male_20-34'] + df['male_25-29'] + df['male_30-34']
 
 # consolidate female total population age ranges to single age range of 20-34
-df['female_20-34'] = df['female_20'] + df['female_21'] + df['female_22-24']
-df['female_20-34'] = df['female_20-34'] + df['female_25-29'] + df['female_30-34']
+# df['female_20-34'] = df['female_20'] + df['female_21'] + df['female_22-24']
+# df['female_20-34'] = df['female_20-34'] + df['female_25-29'] + df['female_30-34']
 
+### end
+
+
+  __ _| | |  _   _  ___  _   _   _ __   ___  ___  __| | (_)___ 
+ / _` | | | | | | |/ _ \| | | | | '_ \ / _ \/ _ \/ _` | | / __|
+| (_| | | | | |_| | (_) | |_| | | | | |  __/  __/ (_| | | \__ \
+ \__,_|_|_|  \__, |\___/ \__,_| |_| |_|\___|\___|\__,_| |_|___/
+             |___/                                             
+ _                                  _   _     _       
+| | _____   _____    __ _ _ __   __| | | |__ (_) __ _ 
+| |/ _ \ \ / / _ \  / _` | '_ \ / _` | | '_ \| |/ _` |
+| | (_) \ V /  __/ | (_| | | | | (_| | | |_) | | (_| |
+|_|\___/ \_/ \___|  \__,_|_| |_|\__,_| |_.__/|_|\__, |
+                                                |___/ 
+                      _     _                                        
+  ___ ___   ___   ___| |__ (_) ___    ___ _ __   ___ _ __ __ _ _   _ 
+ / __/ _ \ / _ \ / __| '_ \| |/ _ \  / _ \ '_ \ / _ \ '__/ _` | | | |
+| (_| (_) | (_) | (__| | | | |  __/ |  __/ | | |  __/ | | (_| | |_| |
+ \___\___/ \___/ \___|_| |_|_|\___|  \___|_| |_|\___|_|  \__, |\__, |
+                                                         |___/ |___/ 
+  __              _   _     _                     _      
+ / _| ___  _ __  | |_| |__ (_)___    ___ ___   __| | ___ 
+| |_ / _ \| '__| | __| '_ \| / __|  / __/ _ \ / _` |/ _ \
+|  _| (_) | |    | |_| | | | \__ \ | (_| (_) | (_| |  __/
+|_|  \___/|_|     \__|_| |_|_|___/  \___\___/ \__,_|\___|
+
+
+### below is  more unecessary code to remove IMMEDIATELY
+#
+#
+#
+#
 # drop unecessary total population columns that have now been consolidated
-df = df.drop(['male_20', 'male_21', 'male_22-24', 'male_25-29', 'male_30-34', 
-              'female_20', 'female_21', 'female_22-24', 'female_25-29', 
-              'female_30-34', 'state'], axis=1)
+#df = df.drop(['male_20', 'male_21', 'male_22-24', 'male_25-29', 'male_30-34', 
+#              'female_20', 'female_21', 'female_22-24', 'female_25-29', 
+#              'female_30-34', 'state'], axis=1)
 
 # combine male and female population columns and drop originals; no need for gender 
 # breakdown as the analysis is focused on age ranges rather than gender
-df['population_20-34'] = df['male_20-34'] + df['female_20-34']
-df = df.drop(['male_20-34', 'female_20-34'], axis=1)
+#df['population_20-34'] = df['male_20-34'] + df['female_20-34']
+#df = df.drop(['male_20-34', 'female_20-34'], axis=1)
 
 # get rid of Alaska and Puerto Rico to focus on contiguous US for a cleaner visualization
-df = df[df.name != 'Alaska']
-df = df[df.name != 'Puerto Rico']
-df = df[df.name != 'Hawaii']
-
-
-# the remainder of the script is analysis of the data ending with data export
-
-# calculate per capita data points for population and owner occupied columns
-df['pop_percap_20-34'] = df['population_20-34'] / df['total_population']
-df['renter_occ_percap'] = df['renter_occupied'] / df['total_population']
-
-# calculate the ratio of prime renting cohort to renter occupied households; this 
-# represents the maximum amount of 20-34 year olds that could potentially be renting 
-df['pop_20-34_to_renter_ratio'] = df['population_20-34'] / df['renter_occupied']
-
-# reorganize columns for a better organized spreadsheet after exporting
-cols = list(df.columns)
-cols = cols[0:1] + cols[3:4] + cols[1:3] + cols[6:7] + cols[4:6] + cols[7:8]
-df = df[cols]
-
-# calculate year over year growth of ages 20-34 population per capita and renter 
-# population per capita then calculate 5-year rolling averages in a separate dataframe;
-# also pivoting each years data from rows to columns, will be total of 50 rows for states  
-
-# define function for capturing necessary data in a new dataframe to use in for loop;
-# this funciton only works specifically for dataframe in this script, it references static
-# column names from dataframe and would return an error if used on any other dataframe
-def df_where_year(df, year, columns):
-    df_temp = df.where(df['year'] == year)[columns].dropna(axis=0)
-    rename_cols = {columns[1]: str(year) + '_pop_percap_20-34', 
-                    columns[2]: str(year) + '_renter_occ_percap'}
-    df_temp = df_temp.rename(columns=rename_cols)
-    df_temp = df_temp.sort_values(by=['name'], ignore_index=True)
-    return df_temp
-
-# list years to iterate over and run data capture functions/calculations
-years_list = [2021, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011] 
-
-# list out columns to keep in preceding dataframes
-cols = ['name', 'pop_percap_20-34', 'renter_occ_percap']
-
-# setup dataframe for merging data captured dataframes to with only name column
-df_YoY = df[['name']].drop_duplicates()
-
-# iterate over years list to capture specific segments of dataframe and merge into one
-for year in years_list:
-    df_yr = df_where_year(df, year, cols)
-    df_YoY = pd.merge(df_YoY, df_yr, on='name', how='inner')
-
-# function to calculate year over year growth between columns of dataframe; like  
-# the previous function this references static column names and will only work  
-# on the dataframe in this script and not any other dataframe
-def df_cols_YoY_growth(df, yr1, yr2, col_id):
-    col_name = 'YoY_' + str(yr2) + '-' + str(yr1) + '_' + col_id + '_growth'
-    df_cols = [col for col in df.columns if col_id in col]
-    df_col_1 = [col for col in df_cols if str(yr1) in col][0]
-    df_col_2 = [col for col in df_cols if str(yr2) in col][0]
-    df[col_name] = ( df[df_col_1] - df[df_col_2] ) / df[df_col_2] 
-
-# iterate over years list to calculate year over year growth of population
-for index, year in enumerate(years_list):
-    if year != years_list[-1]:
-        df_cols_YoY_growth(df_YoY, year, years_list[index+1], 'pop')
-
-# iterate over years list to calculate year over year growth of renter households
-for index, year in enumerate(years_list):
-    if year != years_list[-1]:
-        df_cols_YoY_growth(df_YoY, year, years_list[index+1], 'renter')
-
-# dynamically select columns of dataframe which will then be averaged
-pop_cols_avg = []
-rent_cols_avg = []
-for index, year in enumerate(years_list):
-    if year != years_list[-1]:
-        pop_col = 'YoY_' + str(years_list[index+1]) + '-' + str(year) + '_pop_growth'
-        rent_col = 'YoY_' + str(years_list[index+1]) + '-' + str(year) + '_renter_growth'
-        pop_cols_avg.append(pop_col)
-        rent_cols_avg.append(rent_col)
-        
-# dynamically segement pop columns list to lists of 5 item / 5-year segements and 
-# then use list to average corresponding columns of dataframe and pass to new column  
-for index, year in enumerate(years_list):
-    if index <= years_list.index(years_list[4]):
-        pop_cols_avg_yr = str(year) + '_5Yr_Avg_YoY_pop_growth'
-        pop_cols_avg_tmp = pop_cols_avg[index:index+5]
-        df_YoY[pop_cols_avg_yr] = df_YoY[pop_cols_avg_tmp].mean(axis=1).round(6)
-
-# dynamically segement rent columns list to lists of 5 item / 5-year segements and 
-# then use list to average corresponding columns of dataframe and pass to new column  
-for index, year in enumerate(years_list):
-    if index <= years_list.index(years_list[4]):
-        rent_cols_avg_yr = str(year) + '_5Yr_Avg_YoY_renter_growth'
-        rent_cols_avg_tmp = rent_cols_avg[index:index+5]
-        df_YoY[rent_cols_avg_yr] = df_YoY[rent_cols_avg_tmp].mean(axis=1).round(6)
-
-# drop unnecessary columns for a cleaner/efficient data source to import to Tableau
-cols = ['2015_pop_percap_20-34', '2015_renter_occ_percap', '2014_pop_percap_20-34', 
-        '2014_renter_occ_percap', '2013_pop_percap_20-34', '2013_renter_occ_percap',
-        '2012_pop_percap_20-34', '2012_renter_occ_percap', '2011_pop_percap_20-34', 
-        '2011_renter_occ_percap', 'YoY_2014-2015_pop_growth', 'YoY_2013-2014_pop_growth',
-        'YoY_2012-2013_pop_growth', 'YoY_2011-2012_pop_growth', 'YoY_2014-2015_renter_growth', 
-        'YoY_2013-2014_renter_growth', 'YoY_2012-2013_renter_growth', 'YoY_2011-2012_renter_growth']
-df_YoY = df_YoY.drop(cols, axis=1)
-
-# export dataframes to excel of loading to Tableau Public and visualization
-df.to_excel('CB_ST_prime_renter_cohort.xlsx', sheet_name='Data_ST_Prime_Cohort', 
-            index=False)
-df_YoY.to_excel('CB_ST_prime_renter_cohort_growth.xlsx', 
-                sheet_name='Data_ST_Prime_Cohort_Growth', index=False)
-
+# df = df[df.name != 'Alaska']
+# df = df[df.name != 'Puerto Rico']
+# df = df[df.name != 'Hawaii']
+# 
+# 
+# # the remainder of the script is analysis of the data ending with data export
+# 
+# # calculate per capita data points for population and owner occupied columns
+# df['pop_percap_20-34'] = df['population_20-34'] / df['total_population']
+# df['renter_occ_percap'] = df['renter_occupied'] / df['total_population']
+# 
+# # calculate the ratio of prime renting cohort to renter occupied households; this 
+# # represents the maximum amount of 20-34 year olds that could potentially be renting 
+# df['pop_20-34_to_renter_ratio'] = df['population_20-34'] / df['renter_occupied']
+# 
+# # reorganize columns for a better organized spreadsheet after exporting
+# cols = list(df.columns)
+# cols = cols[0:1] + cols[3:4] + cols[1:3] + cols[6:7] + cols[4:6] + cols[7:8]
+# df = df[cols]
+# 
+# # calculate year over year growth of ages 20-34 population per capita and renter 
+# # population per capita then calculate 5-year rolling averages in a separate dataframe;
+# # also pivoting each years data from rows to columns, will be total of 50 rows for states  
+# 
+# # define function for capturing necessary data in a new dataframe to use in for loop;
+# # this funciton only works specifically for dataframe in this script, it references static
+# # column names from dataframe and would return an error if used on any other dataframe
+# def df_where_year(df, year, columns):
+#     df_temp = df.where(df['year'] == year)[columns].dropna(axis=0)
+#     rename_cols = {columns[1]: str(year) + '_pop_percap_20-34', 
+#                     columns[2]: str(year) + '_renter_occ_percap'}
+#     df_temp = df_temp.rename(columns=rename_cols)
+#     df_temp = df_temp.sort_values(by=['name'], ignore_index=True)
+#     return df_temp
+# 
+# # list years to iterate over and run data capture functions/calculations
+# years_list = [2021, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011] 
+# 
+# # list out columns to keep in preceding dataframes
+# cols = ['name', 'pop_percap_20-34', 'renter_occ_percap']
+# 
+# # setup dataframe for merging data captured dataframes to with only name column
+# df_YoY = df[['name']].drop_duplicates()
+# 
+# # iterate over years list to capture specific segments of dataframe and merge into one
+# for year in years_list:
+#     df_yr = df_where_year(df, year, cols)
+#     df_YoY = pd.merge(df_YoY, df_yr, on='name', how='inner')
+# 
+# # function to calculate year over year growth between columns of dataframe; like  
+# # the previous function this references static column names and will only work  
+# # on the dataframe in this script and not any other dataframe
+# def df_cols_YoY_growth(df, yr1, yr2, col_id):
+#     col_name = 'YoY_' + str(yr2) + '-' + str(yr1) + '_' + col_id + '_growth'
+#     df_cols = [col for col in df.columns if col_id in col]
+#     df_col_1 = [col for col in df_cols if str(yr1) in col][0]
+#     df_col_2 = [col for col in df_cols if str(yr2) in col][0]
+#     df[col_name] = ( df[df_col_1] - df[df_col_2] ) / df[df_col_2] 
+# 
+# # iterate over years list to calculate year over year growth of population
+# for index, year in enumerate(years_list):
+#     if year != years_list[-1]:
+#         df_cols_YoY_growth(df_YoY, year, years_list[index+1], 'pop')
+# 
+# # iterate over years list to calculate year over year growth of renter households
+# for index, year in enumerate(years_list):
+#     if year != years_list[-1]:
+#         df_cols_YoY_growth(df_YoY, year, years_list[index+1], 'renter')
+# 
+# # dynamically select columns of dataframe which will then be averaged
+# pop_cols_avg = []
+# rent_cols_avg = []
+# for index, year in enumerate(years_list):
+#     if year != years_list[-1]:
+#         pop_col = 'YoY_' + str(years_list[index+1]) + '-' + str(year) + '_pop_growth'
+#         rent_col = 'YoY_' + str(years_list[index+1]) + '-' + str(year) + '_renter_growth'
+#         pop_cols_avg.append(pop_col)
+#         rent_cols_avg.append(rent_col)
+#         
+# # dynamically segement pop columns list to lists of 5 item / 5-year segements and 
+# # then use list to average corresponding columns of dataframe and pass to new column  
+# for index, year in enumerate(years_list):
+#     if index <= years_list.index(years_list[4]):
+#         pop_cols_avg_yr = str(year) + '_5Yr_Avg_YoY_pop_growth'
+#         pop_cols_avg_tmp = pop_cols_avg[index:index+5]
+#         df_YoY[pop_cols_avg_yr] = df_YoY[pop_cols_avg_tmp].mean(axis=1).round(6)
+# 
+# # dynamically segement rent columns list to lists of 5 item / 5-year segements and 
+# # then use list to average corresponding columns of dataframe and pass to new column  
+# for index, year in enumerate(years_list):
+#     if index <= years_list.index(years_list[4]):
+#         rent_cols_avg_yr = str(year) + '_5Yr_Avg_YoY_renter_growth'
+#         rent_cols_avg_tmp = rent_cols_avg[index:index+5]
+#         df_YoY[rent_cols_avg_yr] = df_YoY[rent_cols_avg_tmp].mean(axis=1).round(6)
+# 
+# # drop unnecessary columns for a cleaner/efficient data source to import to Tableau
+# cols = ['2015_pop_percap_20-34', '2015_renter_occ_percap', '2014_pop_percap_20-34', 
+#         '2014_renter_occ_percap', '2013_pop_percap_20-34', '2013_renter_occ_percap',
+#         '2012_pop_percap_20-34', '2012_renter_occ_percap', '2011_pop_percap_20-34', 
+#         '2011_renter_occ_percap', 'YoY_2014-2015_pop_growth', 'YoY_2013-2014_pop_growth',
+#         'YoY_2012-2013_pop_growth', 'YoY_2011-2012_pop_growth', 'YoY_2014-2015_renter_growth', 
+#         'YoY_2013-2014_renter_growth', 'YoY_2012-2013_renter_growth', 'YoY_2011-2012_renter_growth']
+# df_YoY = df_YoY.drop(cols, axis=1)
+# 
+# # export dataframes to excel of loading to Tableau Public and visualization
+# df.to_excel('CB_ST_prime_renter_cohort.xlsx', sheet_name='Data_ST_Prime_Cohort', 
+#             index=False)
+# df_YoY.to_excel('CB_ST_prime_renter_cohort_growth.xlsx', 
+#                 sheet_name='Data_ST_Prime_Cohort_Growth', index=False)
+# 
